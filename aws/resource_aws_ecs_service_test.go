@@ -1240,6 +1240,35 @@ func TestAccAWSEcsService_ExecuteCommand(t *testing.T) {
 	})
 }
 
+func TestAccAWSEcsService_UpdateDesiredCountWithBGDeployment(t *testing.T) {
+	var service ecs.Service
+	rName := acctest.RandomWithPrefix("tf-acc-test")
+	resourceName := "aws_ecs_service.test"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		ErrorCheck:   testAccErrorCheck(t, ecs.EndpointsID),
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSEcsServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSEcsServiceUpdateDesiredCountWithBGDeployment(rName, 1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSEcsServiceExists(resourceName, &service),
+					resource.TestCheckResourceAttr(resourceName, "desired_count", "1"),
+				),
+			},
+			{
+				Config: testAccAWSEcsServiceUpdateDesiredCountWithBGDeployment(rName, 2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSEcsServiceExists(resourceName, &service),
+					resource.TestCheckResourceAttr(resourceName, "desired_count", "2"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckAWSEcsServiceDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*AWSClient).ecsconn
 
@@ -3981,4 +4010,163 @@ resource "aws_ecs_service" "test" {
   enable_execute_command = %[2]t
 }
 `, rName, enable)
+}
+
+func testAccAWSEcsServiceUpdateDesiredCountWithBGDeployment(rName string, desiredCount int) string {
+	return fmt.Sprintf(`
+data "aws_availability_zones" "available" {
+  state = "available"
+
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
+
+resource "aws_vpc" "test" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = %[1]q
+  }
+}
+
+resource "aws_subnet" "test" {
+  count = 2
+
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+  cidr_block        = cidrsubnet(aws_vpc.test.cidr_block, 8, count.index)
+  vpc_id            = aws_vpc.test.id
+
+  tags = {
+    Name = %[1]q
+  }
+}
+
+resource "aws_lb" "test" {
+  internal = true
+  name     = %[1]q
+  subnets  = aws_subnet.test[*].id
+}
+
+resource "aws_lb_listener" "test" {
+  load_balancer_arn = aws_lb.test.id
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_lb_target_group.test.id
+    type             = "forward"
+  }
+}
+
+resource "aws_lb_target_group" "test" {
+  name     = aws_lb.test.name
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.test.id
+}
+
+resource "aws_ecs_cluster" "test" {
+  name = %[1]q
+}
+
+resource "aws_ecs_task_definition" "test" {
+  family = %[1]q
+
+  container_definitions = <<DEFINITION
+[
+  {
+    "cpu": 128,
+    "essential": true,
+    "image": "mongo:latest",
+    "memory": 128,
+    "name": "test",
+    "portMappings": [
+      {
+        "containerPort": 80,
+        "hostPort": 8080
+      }
+    ]
+  }
+]
+DEFINITION
+}
+
+resource "aws_ecs_service" "test" {
+  cluster         = aws_ecs_cluster.test.id
+  desired_count   = %[2]d
+  name            = %[1]q
+  task_definition = aws_ecs_task_definition.test.arn
+
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
+
+  load_balancer {
+    container_name   = "test"
+    container_port   = "80"
+    target_group_arn = aws_lb_target_group.test.id
+  }
+}
+
+resource "aws_codedeploy_app" "test" {
+  name = "test"
+  compute_platform = "ECS"
+}
+
+resource "aws_codedeploy_deployment_group" "test" {
+  app_name               = aws_codedeploy_app.test.name
+  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
+  deployment_group_name  = "test"
+  service_role_arn       = aws_iam_role.test.arn
+
+  blue_green_deployment_config {
+    deployment_ready_option {
+      action_on_timeout = "CONTINUE_DEPLOYMENT"
+    }
+
+    terminate_blue_instances_on_deployment_success {
+      action                           = "TERMINATE"
+      termination_wait_time_in_minutes = 5
+    }
+  }
+
+  deployment_style {
+    deployment_option = "WITH_TRAFFIC_CONTROL"
+    deployment_type   = "BLUE_GREEN"
+  }
+
+  ecs_service {
+    cluster_name = aws_ecs_cluster.test.name
+    service_name = aws_ecs_service.test.name
+  }
+}
+
+resource "aws_iam_role" "test" {
+  assume_role_policy = data.aws_iam_policy_document.test.json
+  name = "test"
+}
+
+resource "aws_iam_role_policy_attachment" "test" {
+  policy_arn = data.aws_iam_policy.AWSCodeDeployRoleForECS.arn
+  role = aws_iam_role.test.name
+}
+
+data "aws_iam_policy_document" "test" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      identifiers = ["codedeploy.amazonaws.com"]
+      type = "Service"
+    }
+  }
+}
+
+
+data "aws_iam_policy" "AWSCodeDeployRoleForECS" {
+  arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
+}
+`, rName, desiredCount)
 }
