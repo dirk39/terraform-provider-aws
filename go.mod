@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/bedrock v1.3.3
 	github.com/aws/aws-sdk-go-v2/service/chimesdkmediapipelines v1.12.3
 	github.com/aws/aws-sdk-go-v2/service/chimesdkvoice v1.11.4
-	github.com/aws/aws-sdk-go-v2/service/cleanrooms v1.7.2
+	github.com/aws/aws-sdk-go-v2/service/cleanrooms v1.7.3
 	github.com/aws/aws-sdk-go-v2/service/cloudcontrol v1.14.4
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.27.2
 	github.com/aws/aws-sdk-go-v2/service/codecatalyst v1.9.1
