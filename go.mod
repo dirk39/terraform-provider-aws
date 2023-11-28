@@ -40,7 +40,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/emrserverless v1.13.4
 	github.com/aws/aws-sdk-go-v2/service/finspace v1.17.1
 	github.com/aws/aws-sdk-go-v2/service/fis v1.19.3
-	github.com/aws/aws-sdk-go-v2/service/glacier v1.18.3
+	github.com/aws/aws-sdk-go-v2/service/glacier v1.18.4
 	github.com/aws/aws-sdk-go-v2/service/healthlake v1.19.3
 	github.com/aws/aws-sdk-go-v2/service/identitystore v1.20.3
 	github.com/aws/aws-sdk-go-v2/service/inspector2 v1.19.3
