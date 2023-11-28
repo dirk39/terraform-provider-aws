@@ -152,8 +152,8 @@ github.com/aws/aws-sdk-go-v2/service/oam v1.6.3 h1:S3GlOlpESh8BCOAiFc2DDXlM1bCNn
 github.com/aws/aws-sdk-go-v2/service/oam v1.6.3/go.mod h1:pfLMa7wlMAGH4/BfAvs7T7Hx+eUnfOH6I13yEq+nmn0=
 github.com/aws/aws-sdk-go-v2/service/opensearchserverless v1.8.3 h1:rYx9F+RnIIVZklBHyvv34tVvMBZPex2rQGbiyjYW4MU=
 github.com/aws/aws-sdk-go-v2/service/opensearchserverless v1.8.3/go.mod h1:VePNBj+se/QYQpH8RTKdFx83iRMAKUev9JyOiUs8Wr4=
-github.com/aws/aws-sdk-go-v2/service/osis v1.5.1 h1:anUrguxdcgTyLn/PtBvS8fvFWgaT7YnQJRarH6713FM=
-github.com/aws/aws-sdk-go-v2/service/osis v1.5.1/go.mod h1:R9REkyNcMzOf8Btlgj79OcK0aMlpOW+riOwASOXr9VE=
+github.com/aws/aws-sdk-go-v2/service/osis v1.5.2 h1:ND/eJLlYLlqv3rdZ4YPaIeAy3vtDE18yH6nDSnFVpPY=
+github.com/aws/aws-sdk-go-v2/service/osis v1.5.2/go.mod h1:R9REkyNcMzOf8Btlgj79OcK0aMlpOW+riOwASOXr9VE=
 github.com/aws/aws-sdk-go-v2/service/pipes v1.8.1 h1:aaGRX6RLKYO31cqoVuMG/XU4W/Dmnfy4H8V+gr7R28c=
 github.com/aws/aws-sdk-go-v2/service/pipes v1.8.1/go.mod h1:hcr1CUx5Fk5ABqk93GlkbeRwl4mhm3cbd04SAfKw+uQ=
 github.com/aws/aws-sdk-go-v2/service/pricing v1.23.3 h1:/fGaDu3SL5WeUypBfyEMA8QF0K+geeWS2v8OggmSfyE=
